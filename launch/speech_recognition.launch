@@ -1,0 +1,4 @@
+<launch>
+  <node name="chrome_speech_driver" pkg="speech_recognition" type="chrome_driver.py"
+        launch-prefix="xvfb-run -s '-screen 0, 1024x768x24' " />
+</launch>

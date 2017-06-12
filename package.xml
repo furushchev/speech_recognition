@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <name>speech_recognition</name>
+  <version>0.0.0</version>
+  <description>The speech_recognition package</description>
+
+  <maintainer email="furushchev@todo.todo">furushchev</maintainer>
+  <license>MIT</license>
+  <author email="furushchev@jsk.imi.i.u-tokyo.ac.jp">Yuki Furuta</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>python-selenium-pip</run_depend>
+
+  <export>
+  </export>
+</package>
