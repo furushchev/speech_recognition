@@ -5,6 +5,7 @@
 from __future__ import division
 import os
 import rospy
+import rospkg
 import diagnostic_updater
 from diagnostic_msgs.msg import DiagnosticStatus
 from speech_recognition_msgs.msg import SpeechRecognitionCandidates
@@ -19,12 +20,20 @@ class ChromeSpeechRecognition(object):
         self.latest_time = rospy.Time(0)
 
         # launch browser
+        if not os.path.exists("/opt/google/chrome/chrome"):
+            rospy.logfatal("Google Chrome not found. Install Google Chrome")
+            return
         options = Options()
         options.add_argument("--no-first-run")
         options.add_argument("--use-fake-ui-for-media-stream")
         options.add_argument("--use-fake-device-for-media-stream")
         # options.add_argument("--headless")
-        self.browser = webdriver.Chrome(chrome_options=options)
+        driver_path = os.path.join(rospkg.RosPack().get_path("speech_recognition"),
+                                   "bin", "chromedriver")
+        if not os.path.exists(driver_path):
+            rospy.logfatal("ChromeDriver not found at %s" % driver_path)
+            return
+        self.browser = webdriver.Chrome(driver_path, chrome_options=options)
         self.browser.get("https://furushchev.ru/rwt/speech_recognition")
 
         # setup diag
