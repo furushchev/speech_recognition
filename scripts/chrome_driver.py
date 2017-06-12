@@ -3,6 +3,7 @@
 # Author: Yuki Furuta <furushchev@jsk.imi.i.u-tokyo.ac.jp>
 
 from __future__ import division
+import json
 import os
 import rospy
 import diagnostic_updater
@@ -34,9 +35,6 @@ class ChromeSpeechRecognition(object):
 
         self.pub_sr = rospy.Publisher("speech_to_text", SpeechRecognitionCandidates, queue_size=1)
 
-        hz = 20.0
-        self.timer = rospy.Timer(rospy.Duration(1./hz), self.timer_cb)
-
     def __del__(self):
         try:
             self.stop()
@@ -47,45 +45,54 @@ class ChromeSpeechRecognition(object):
         except:
             pass
 
-    def timer_cb(self, event):
+    def timer_cb(self):
         self.updater.update()
+
         if not self.stats:
-            rospy.logwarn_throttle(1.0, "No stats")
             return
 
         # publish results
         new_stats = dict(sorted(filter(lambda e: e[0] > self.latest_time, self.stats.items())))
-        for t, data in new_stats:
+        for t, data in new_stats.items():
             stat, detail = data
             if "onresult" in stat:
                 msg = SpeechRecognitionCandidates()
-                for transcript, confidence in detail:
+                for transcript, confidence in detail.items():
                     msg.transcript.append(transcript)
                     msg.confidence.append(confidence)
                 self.pub_sr.publish(msg)
 
         # store latest status time
-        latest = sorted(self.stats.items())[0]
+        latest = sorted(self.stats.items())[-1]
         self.latest_time = latest[0]
 
     def update_status(self, diag):
         text = self.browser.find_element_by_id("status").text
-        stats = {}
-        for line in text.split(os.linesep):
-            tm, st, detail = line.strip().split('|')
-            sec, nsec = int(tm) // 1000, (int(tm) % 1000) * 1000 * 1000
-            stats[rospy.Time(sec, nsec)] = (st, json.loads(detail))
+        if text:
+            rospy.loginfo(text)
+            stats = {}
+            for line in text.split(os.linesep):
+                tm, st, detail = line.strip().split('|')
+                if detail:
+                    rospy.loginfo(detail)
+                    detail = json.loads(detail)
+                sec, nsec = int(tm) // 1000, (int(tm) % 1000) * 1000 * 1000
+                stats[rospy.Time(sec, nsec)] = (st, detail)
+            self.stats = stats
 
-        # diagnostics
-        latest = sorted(stats.items())[0]
-        diag.summary(DiagnosticStatus.OK, "Status OK")
-        diag.add("Status", latest[1])
-        self.stats = stats
+            # diagnostics
+            latest = sorted(stats.items())[-1]
+            diag.summary(DiagnosticStatus.OK, "Status OK")
+            diag.add("Status", latest[1][0])
+            diag.add("Detail", latest[1][1])
+        else:
+            diag.summary(DiagnosticStatus.STALE, "No stats")
+            self.start()
+
         return diag
 
     def get_result(self):
         text = self.browser.find_element_by_id("result").text
-        rospy.loginfo("result: " + text)
         return text
 
     def start(self):
@@ -98,7 +105,14 @@ class ChromeSpeechRecognition(object):
         btn.click()
         rospy.loginfo("Stopped speech recognition")
 
+    def spin(self):
+        rate = rospy.Rate(20)
+        while not rospy.is_shutdown():
+            self.timer_cb()
+            rate.sleep()
+
 if __name__ == '__main__':
     rospy.init_node("chrome_speech_driver")
     d = ChromeSpeechRecognition()
-    rospy.spin()
+    d.spin()
+
