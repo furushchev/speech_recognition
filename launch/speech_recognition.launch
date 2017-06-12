@@ -1,5 +1,8 @@
 <launch>
+  <arg name="language" default="en-US" />
   <node name="chrome_speech_driver" pkg="speech_recognition" type="chrome_driver.py"
         output="screen"
-        launch-prefix="xvfb-run -s '-screen 0, 1024x768x24' " />
+        launch-prefix="xvfb-run -s '-screen 0, 1024x768x24' ">
+    <param name="language" value="$(arg language)" />
+  </node>
 </launch>

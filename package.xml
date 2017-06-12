@@ -9,6 +9,7 @@
   <author email="furushchev@jsk.imi.i.u-tokyo.ac.jp">Yuki Furuta</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>speech_recognition_msgs</run_depend>
   <run_depend>python-selenium-pip</run_depend>
   <run_depend>xvfb</run_depend>
 

@@ -12,12 +12,14 @@ from diagnostic_msgs.msg import DiagnosticStatus
 from speech_recognition_msgs.msg import SpeechRecognitionCandidates
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 
 
 class ChromeSpeechRecognition(object):
     def __init__(self):
         self.stats = {}
         self.latest_time = rospy.Time(0)
+        self.language = rospy.get_param("~language", "en-US")
 
         # launch browser
         if not os.path.exists("/opt/google/chrome/chrome"):
@@ -77,13 +79,13 @@ class ChromeSpeechRecognition(object):
     def update_status(self, diag):
         text = self.browser.find_element_by_id("status").text
         if text:
-            rospy.loginfo(text)
             stats = {}
             for line in text.split(os.linesep):
                 tm, st, detail = line.strip().split('|')
-                if detail:
-                    rospy.loginfo(detail)
+                try:
                     detail = json.loads(detail)
+                except:
+                    pass
                 sec, nsec = int(tm) // 1000, (int(tm) % 1000) * 1000 * 1000
                 stats[rospy.Time(sec, nsec)] = (st, detail)
             self.stats = stats
@@ -106,12 +108,17 @@ class ChromeSpeechRecognition(object):
     def start(self):
         btn = self.browser.find_element_by_id("start-button")
         btn.click()
+        self.set_language(self.language)
         rospy.loginfo("Started speech recognition")
 
     def stop(self):
         btn = self.browser.find_element_by_id("stop-button")
         btn.click()
         rospy.loginfo("Stopped speech recognition")
+
+    def set_language(self, lang):
+        select = Select(self.browser.find_element_by_id("language"))
+        select.select_by_value(lang)
 
     def spin(self):
         rate = rospy.Rate(20)
