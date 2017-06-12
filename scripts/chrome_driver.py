@@ -10,7 +10,6 @@ import diagnostic_updater
 from diagnostic_msgs.msg import DiagnosticStatus
 from speech_recognition_msgs.msg import SpeechRecognitionCandidates
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 
 
@@ -115,4 +114,3 @@ if __name__ == '__main__':
     rospy.init_node("chrome_speech_driver")
     d = ChromeSpeechRecognition()
     d.spin()
-
